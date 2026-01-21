@@ -9,7 +9,7 @@ Description: Provides drop-in replacements for Shiny's text outputs that
     automatically handle timezone conversion based on the user's browser 
     timezone. Eliminates the common problem of server timestamps being 
     displayed in the wrong timezone for remote users.
-License: MIT + file LICENSE
+License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
