@@ -412,7 +412,7 @@ ui <- fluidPage(
                     )
                 ),
 
-                # TAB 4: Before/After Comparison
+                # TAB 5: Before/After Comparison
                 tabPanel(
                     title = HTML("Level 4: Comparison"),
                     value = "comparison",
@@ -516,12 +516,7 @@ server <- function(input, output, session) {
 
     # Sidebar timezone displays  
     output$user_timezone <- renderText({
-        # Use manual override if selected, otherwise browser detection
-        if (!is.null(input$manual_tz) && input$manual_tz != "") {
-            paste0(input$manual_tz, " (manual)")
-        } else {
-            get_browser_tz(session, fallback = "Not detected yet...")
-        }
+        get_browser_tz(session, fallback = "Not detected yet...")
     })
     
     output$server_timezone <- renderText({
@@ -643,7 +638,24 @@ server <- function(input, output, session) {
         cat("Current Server Time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), "\n")
     })
 
-    # === TAB 4: COMPARISON ===
+    # === TAB 4: OVERRIDE EXAMPLES ===
+    output$override_datetime <- renderDatetime({
+        autoInvalidate()
+    }, tz = effective_timezone())
+    
+    output$override_date <- renderDate({
+        autoInvalidate()
+    }, tz = effective_timezone())
+    
+    output$override_time <- renderTime({
+        autoInvalidate()
+    }, tz = effective_timezone())
+    
+    output$override_custom <- renderDatetime({
+        autoInvalidate()
+    }, format = "%A, %B %d at %I:%M %p", tz = effective_timezone())
+
+    # === TAB 5: COMPARISON ===
     output$compare_before <- renderText({
         format(autoInvalidate(), "%Y-%m-%d %H:%M:%S %Z")
     })
@@ -657,7 +669,7 @@ server <- function(input, output, session) {
     })
 
     output$user_tz_inline <- renderText({
-        effective_timezone()
+        get_browser_tz(session, fallback = Sys.timezone())
     })
 
     output$compare_table <- renderTable({
@@ -673,7 +685,7 @@ server <- function(input, output, session) {
                 format(lubridate::with_tz(t, Sys.timezone()), "%Y-%m-%d %I:%M %p %Z")
             }),
             "With shinyTZ" = sapply(sample_times, function(t) {
-                format_in_tz(t, format = "%Y-%m-%d %I:%M %p", tz = effective_timezone())
+                format_in_tz(t, format = "%Y-%m-%d %I:%M %p", tz = get_browser_tz(session, fallback = Sys.timezone()))
             }),
             check.names = FALSE,
             stringsAsFactors = FALSE

@@ -1,7 +1,8 @@
 Package: shinyTZ
 Type: Package
 Title: Timezone-Aware Date and Time Rendering for Shiny
-Version: 0.1.0
+Version: 0.1.1
+Date: 2026-01-21
 Authors@R: person("Gregory", "Warnes", 
                   email = "warnes@binghamton.edu",
                   role = c("aut", "cre"))

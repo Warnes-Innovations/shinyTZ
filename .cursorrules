@@ -1,0 +1,6 @@
+# .cursorrules (root directory)
+Before ANY code/file changes:
+1. State copilot-instructions.md sections that apply
+2. List skills: #manage_todo_list, #code-review
+3. Use "we" language, call user "Dr. Greg"
+4. If multi-step: create todo list first

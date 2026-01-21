@@ -1,15 +1,14 @@
 # GitHub Copilot Instructions for shinyTZ
 
-# 🛑 STOP - READ THIS FIRST 🛑
+# 🛑🛑🛑 STOP - MANDATORY PRE-FLIGHT - READ THIS BEFORE RESPONDING 🛑🛑🛑
 
-**Before responding to ANY request involving code changes or multi-step work:**
-
-☐ State which copilot-instructions.md sections apply to this request
+☐ State which user and project copilot-instructions.md sections apply to this request
 ☐ Check if any Agent Skills apply (list them explicitly)
 ☐ If multi-step work: Create todo list with #manage_todo_list
 ☐ Mark tasks in-progress and completed as you work
 ☐ Use #code-review before finalizing ANY code changes
 ☐ Use "we" collaborative language and refer to user as "Dr. Greg"
+☐ Monitor and report token usage at checkpoints (700K/850K/950K)
 
 **If you cannot check ALL boxes above, STOP and ask for clarification.**
 
@@ -191,6 +190,14 @@ output$timestamp <- renderDatetime({
 
 **See design document for complete package structure.**
 
+### Package Version and Date Management
+
+**See #user-r-workflow skill for complete guidance on:**
+- Updating DESCRIPTION version and date before reinstalling
+- Versioning rules (Patch/Minor/Major)
+- Reinstalling after code changes with `devtools::document()` and `renv::install(".")`
+- When to update version and why to regenerate documentation first
+
 ---
 
 ## Common Gotchas
@@ -203,6 +210,101 @@ output$timestamp <- renderDatetime({
 6. **Reactive context** - `get_browser_tz()` requires active Shiny session
 7. **lubridate dependency** - Always use `lubridate::with_tz()` for timezone conversion
 8. **JavaScript encoding** - Use `jsonlite::toJSON()` for safe R-to-JS data passing
+
+---
+
+## Architecture Overview
+
+### Core Components
+
+**Render Functions** (`R/renderDatetime.R`, `R/renderDate.R`, `R/renderTime.R`):
+- Use `shiny::createRenderFunction()` pattern for Shiny integration
+- Accept POSIXct/POSIXlt objects, validate with `shiny::validate()` and `shiny::need()`
+- Support custom `formatter` function parameter (takes precedence over `format` string)
+- All functions follow same parameter pattern: `expr`, `format`, `formatter`, `tz`, `locale`, `show_tz`
+
+**Output Functions** (`R/datetime-outputs.R`):
+- UI-side components: `datetimeOutput()`, `dateOutput()`, `timeOutput()`
+- Simple wrappers around `shiny::textOutput()` with custom CSS classes
+- Enable client-side styling and future enhancements
+
+**Timezone Utilities** (`R/get_browser_tz.R`, `R/format_in_tz.R`):
+- `get_browser_tz()` reads `input$shinytz_browser_tz` reactive value
+- `format_in_tz()` wraps `lubridate::with_tz()` + `format()` for consistent conversion
+- Both functions handle NULL/invalid inputs gracefully with fallbacks
+
+**JavaScript Detection** (`inst/www/shinytz.js`):
+- Runs on `shiny:connected` event (after session established)
+- Uses `Intl.DateTimeFormat().resolvedOptions().timeZone` for detection
+- Sets three reactive inputs: `shinytz_browser_tz`, `shinytz_browser_locale`, `shinytz_utc_offset`
+- Logs detection results to console for debugging
+
+**Package Initialization** (`R/zzz.R`):
+- `.onLoad()` registers `inst/www` resource path as `"shinytz"` prefix
+- Handles both installed package and `devtools::load_all()` scenarios
+- Resource registration enables automatic JavaScript loading
+
+### Data Flow
+
+1. **Page Load**: User opens Shiny app, JavaScript executes on `shiny:connected`
+2. **Detection**: JavaScript detects timezone via `Intl` API, sends to server as reactive input
+3. **Validation**: R functions retrieve timezone from `input$shinytz_browser_tz`, validate against `OlsonNames()`
+4. **Conversion**: `format_in_tz()` uses `lubridate::with_tz()` to convert server POSIXct to user timezone
+5. **Rendering**: Formatted string returned to browser, displayed in UI
+
+### Testing Strategy
+
+Tests in `tests/testthat/` validate:
+- **Function creation** - Render functions return correct `shiny.render.function` class
+- **Parameter handling** - Format strings, timezone overrides, custom formatters work
+- **Input validation** - NULL, invalid types handled gracefully
+- **Edge cases** - Timezone conversion, NA values, empty strings
+
+**Note:** Tests verify function creation, not full render execution (requires Shiny session context)
+
+---
+
+## Development Workflows
+
+### Local Development
+
+```bash
+# From project root
+cd /home/warnes/src/shinyTZ
+
+# Load package for interactive development
+Rscript -e 'devtools::load_all()'
+
+# Run tests
+Rscript -e 'devtools::test()'
+
+# Check package (before committing)
+Rscript -e 'devtools::check()'
+```
+
+### After Code Changes
+
+```bash
+# Update documentation and reinstall
+Rscript -e 'devtools::document()'  # Updates man/*.Rd and NAMESPACE
+Rscript -e 'renv::install(".")'    # Makes changes available globally
+```
+
+### Running Example Apps
+
+```bash
+# Launch demo app
+Rscript -e 'shiny::runApp("inst/examples/demo-app")'
+```
+
+### Dependencies
+
+**Core dependencies:**
+- `shiny` (>= 1.7.0) - Reactive framework, resource path registration
+- `lubridate` (>= 1.9.0) - Timezone conversion via `with_tz()`
+- `htmltools` - HTML generation for outputs
+
+**No database dependencies** - Pure R/Shiny package, no external services required
 
 ---
 
