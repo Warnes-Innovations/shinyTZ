@@ -24,8 +24,8 @@ package-name/
 │
 ├── R/                   # R source code
 │   ├── package.R        # Package-level documentation
-│   ├── function1.R      # Logical grouping of related functions
-│   ├── function2.R
+│   ├── function1.R      # One exported function per file (preferred)
+│   ├── function2.R      # File name matches function name
 │   └── zzz.R            # .onLoad(), .onAttach() hooks
 │
 ├── inst/                # Installed files (available at runtime)
@@ -45,6 +45,29 @@ package-name/
 └── data/                # Package datasets (optional)
     └── dataset.rda
 ```
+
+### File Naming Convention
+
+**Best Practice:** One exported function per file, with the file name matching the function name.
+
+```
+R/
+├── my_function.R        # Contains my_function()
+├── another_function.R   # Contains another_function()
+└── helper_functions.R   # Internal/unexported helpers can be grouped
+```
+
+**Why:**
+- Easier navigation and discoverability
+- Clear one-to-one mapping between files and functions
+- Simplifies code reviews and maintenance
+- Follows standard R package conventions (e.g., tidyverse, rstudio packages)
+
+**Exceptions:**
+- Internal/helper functions can be grouped in appropriately named files
+- `.onLoad()`, `.onAttach()`, `.onUnload()` go in `zzz.R`
+- Package-level documentation goes in `package.R`
+- Very closely related functions (e.g., constructor + validator) may share a file
 
 ## Documentation with roxygen2
 
