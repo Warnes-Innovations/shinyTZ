@@ -8,6 +8,9 @@ library(lubridate)  # For custom formatter examples
 ui <- fluidPage(
     # Add custom CSS for styling
     tags$head(
+        # Include shinyTZ JavaScript
+        tags$script(src = "shinytz/shinytz.js"),
+        
         tags$style(HTML("
             .info-box {
                 background-color: #f8f9fa;
@@ -62,7 +65,30 @@ ui <- fluidPage(
                 textOutput("user_timezone"),
                 br(),
                 h5("Server Timezone:"),
-                textOutput("server_timezone")
+                textOutput("server_timezone"),
+                br(),
+                h5("🐛 Debug Info:"),
+                p("JS Input:", textOutput("debug_js_input", inline = TRUE)),
+                p("UTC Offset:", textOutput("debug_utc_offset", inline = TRUE)),
+                p("Locale:", textOutput("debug_locale", inline = TRUE))
+            ),
+            
+            div(
+                class = "info-box",
+                h5("Manual Timezone Override:"),
+                selectInput("manual_tz", "Choose timezone:",
+                    choices = c("Auto-detect" = "",
+                              "America/New_York" = "America/New_York",
+                              "America/Chicago" = "America/Chicago",
+                              "America/Denver" = "America/Denver",
+                              "America/Los_Angeles" = "America/Los_Angeles",
+                              "Europe/London" = "Europe/London",
+                              "Europe/Paris" = "Europe/Paris",
+                              "Asia/Tokyo" = "Asia/Tokyo",
+                              "Asia/Shanghai" = "Asia/Shanghai",
+                              "Australia/Sydney" = "Australia/Sydney"),
+                    selected = ""),
+                helpText("Select a timezone to override browser detection")
             ),
 
             hr(),
@@ -488,13 +514,40 @@ server <- function(input, output, session) {
         Sys.time()
     })
 
-    # Sidebar timezone displays
+    # Sidebar timezone displays  
     output$user_timezone <- renderText({
-        get_browser_tz(session, fallback = "Not detected yet...")
+        # Use manual override if selected, otherwise browser detection
+        if (!is.null(input$manual_tz) && input$manual_tz != "") {
+            paste0(input$manual_tz, " (manual)")
+        } else {
+            get_browser_tz(session, fallback = "Not detected yet...")
+        }
     })
-
+    
     output$server_timezone <- renderText({
         Sys.timezone()
+    })
+    
+    # Debug outputs
+    output$debug_js_input <- renderText({
+        input$shinytz_browser_tz %||% "NULL"
+    })
+    
+    output$debug_utc_offset <- renderText({
+        input$shinytz_utc_offset %||% "NULL"
+    })
+    
+    output$debug_locale <- renderText({
+        input$shinytz_browser_locale %||% "NULL"
+    })
+    
+    # Helper to get effective timezone (manual override or browser)
+    effective_timezone <- reactive({
+        if (!is.null(input$manual_tz) && input$manual_tz != "") {
+            input$manual_tz
+        } else {
+            get_browser_tz(session, fallback = Sys.timezone())
+        }
     })
 
     # === TAB 1: BASIC USAGE ===
@@ -576,7 +629,7 @@ server <- function(input, output, session) {
                 as.POSIXct("2026-01-20 14:45:00", tz = "UTC"),
                 as.POSIXct("2026-01-20 16:20:00", tz = "UTC")
             ), function(ts) {
-                format_in_tz(ts, format = "%Y-%m-%d %I:%M %p", tz = get_browser_tz(session))
+                format_in_tz(ts, format = "%Y-%m-%d %I:%M %p", tz = effective_timezone())
             }),
             check.names = FALSE,
             stringsAsFactors = FALSE
@@ -584,7 +637,8 @@ server <- function(input, output, session) {
     })
 
     output$adv_tz_info <- renderPrint({
-        cat("Detected Browser Timezone:", get_browser_tz(session), "\n")
+        cat("Detected Browser Timezone:", input$shinytz_browser_tz %||% "NULL", "\n")
+        cat("Effective Timezone:", effective_timezone(), "\n")
         cat("Server Timezone:", Sys.timezone(), "\n")
         cat("Current Server Time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), "\n")
     })
@@ -603,7 +657,7 @@ server <- function(input, output, session) {
     })
 
     output$user_tz_inline <- renderText({
-        get_browser_tz(session, fallback = "detecting...")
+        effective_timezone()
     })
 
     output$compare_table <- renderTable({
@@ -619,7 +673,7 @@ server <- function(input, output, session) {
                 format(lubridate::with_tz(t, Sys.timezone()), "%Y-%m-%d %I:%M %p %Z")
             }),
             "With shinyTZ" = sapply(sample_times, function(t) {
-                format_in_tz(t, format = "%Y-%m-%d %I:%M %p", tz = get_browser_tz(session))
+                format_in_tz(t, format = "%Y-%m-%d %I:%M %p", tz = effective_timezone())
             }),
             check.names = FALSE,
             stringsAsFactors = FALSE
