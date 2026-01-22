@@ -118,3 +118,77 @@ test_that("output functions create unique elements", {
   expect_true("shinytz-date" %in% strsplit(ui2$attribs$class, " ")[[1]])
   expect_true("shinytz-time" %in% strsplit(ui3$attribs$class, " ")[[1]])
 })
+
+test_that("datetimeOutput handles inline parameter", {
+  # inline = TRUE should use span
+  ui_inline <- datetimeOutput("test", inline = TRUE)
+  expect_equal(ui_inline$name, "span")
+  expect_true("shiny-text-output" %in% strsplit(ui_inline$attribs$class, " ")[[1]])
+  
+  # inline = FALSE should use div (default)
+  ui_block <- datetimeOutput("test", inline = FALSE)
+  expect_equal(ui_block$name, "div")
+  
+  # Default should be div
+  ui_default <- datetimeOutput("test")
+  expect_equal(ui_default$name, "div")
+})
+
+test_that("dateOutput handles inline parameter", {
+  # inline = TRUE should use span
+  ui_inline <- dateOutput("test", inline = TRUE)
+  expect_equal(ui_inline$name, "span")
+  
+  # inline = FALSE should use div
+  ui_block <- dateOutput("test", inline = FALSE)
+  expect_equal(ui_block$name, "div")
+  
+  # Default should be div
+  ui_default <- dateOutput("test")
+  expect_equal(ui_default$name, "div")
+})
+
+test_that("timeOutput handles inline parameter", {
+  # inline = TRUE should use span
+  ui_inline <- timeOutput("test", inline = TRUE)
+  expect_equal(ui_inline$name, "span")
+  
+  # inline = FALSE should use div
+  ui_block <- timeOutput("test", inline = FALSE)
+  expect_equal(ui_block$name, "div")
+  
+  # Default should be div
+  ui_default <- timeOutput("test")
+  expect_equal(ui_default$name, "div")
+})
+
+test_that("output functions handle custom container", {
+  # Custom container function for datetimeOutput
+  ui_custom <- datetimeOutput("test", container = htmltools::tags$article)
+  expect_equal(ui_custom$name, "article")
+  expect_equal(ui_custom$attribs$id, "test")
+  
+  # Custom container for dateOutput
+  ui_date <- dateOutput("test", container = htmltools::tags$section)
+  expect_equal(ui_date$name, "section")
+  
+  # Custom container for timeOutput  
+  ui_time <- timeOutput("test", container = htmltools::tags$span)
+  expect_equal(ui_time$name, "span")
+})
+
+test_that("container parameter overrides inline default", {
+  # When both inline and container specified, container should win
+  ui_inline_div <- datetimeOutput("test", inline = TRUE, container = htmltools::tags$div)
+  expect_equal(ui_inline_div$name, "div", info = "container=div should override inline=TRUE default")
+  
+  ui_block_span <- datetimeOutput("test", inline = FALSE, container = htmltools::tags$span)
+  expect_equal(ui_block_span$name, "span", info = "container=span should override inline=FALSE default")
+  
+  # inline only affects the default when container not specified
+  ui_inline_default <- datetimeOutput("test", inline = TRUE)
+  expect_equal(ui_inline_default$name, "span", info = "inline=TRUE uses span when container not specified")
+  
+  ui_block_default <- datetimeOutput("test", inline = FALSE)
+  expect_equal(ui_block_default$name, "div", info = "inline=FALSE uses div when container not specified")
+})
