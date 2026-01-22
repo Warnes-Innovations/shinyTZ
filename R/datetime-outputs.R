@@ -4,8 +4,10 @@
 #' Use with \code{\link{renderDatetime}} in server code.
 #'
 #' @param outputId Output variable name
+#' @param container A function to generate an HTML element to contain the text
 #' @param placeholder Placeholder text shown before reactive value available
 #' @param tz_display Show timezone abbreviation (default: TRUE)
+#' @param inline Use an inline (\code{span()}) or block container (\code{div()})
 #'
 #' @return Shiny UI output element
 #'
@@ -15,15 +17,17 @@
 #' \dontrun{
 #' # UI
 #' datetimeOutput("last_update")
+#' datetimeOutput("inline_time", inline = TRUE)
 #'
 #' # Server
 #' output$last_update <- renderDatetime({
 #'   Sys.time()
 #' })
 #' }
-datetimeOutput <- function(outputId, placeholder = "Loading...", tz_display = TRUE) {
+datetimeOutput <- function(outputId, container = if (inline) shiny::span else shiny::div, 
+                           placeholder = "Loading...", tz_display = TRUE, inline = FALSE) {
   
-  shiny::div(
+  container(
     id = outputId,
     class = "shiny-text-output shinytz-datetime",
     `data-tz-display` = tolower(as.character(tz_display)),
@@ -38,7 +42,9 @@ datetimeOutput <- function(outputId, placeholder = "Loading...", tz_display = TR
 #' Use with \code{\link{renderDate}} in server code.
 #'
 #' @param outputId Output variable name
+#' @param container A function to generate an HTML element to contain the text
 #' @param placeholder Placeholder text
+#' @param inline Use an inline (\code{span()}) or block container (\code{div()})
 #'
 #' @return Shiny UI output element
 #'
@@ -47,10 +53,12 @@ datetimeOutput <- function(outputId, placeholder = "Loading...", tz_display = TR
 #' @examples
 #' \dontrun{
 #' dateOutput("processing_date")
+#' dateOutput("inline_date", inline = TRUE)
 #' }
-dateOutput <- function(outputId, placeholder = "Loading...") {
+dateOutput <- function(outputId, container = if (inline) shiny::span else shiny::div,
+                       placeholder = "Loading...", inline = FALSE) {
   
-  shiny::div(
+  container(
     id = outputId,
     class = "shiny-text-output shinytz-date",
     placeholder
@@ -64,8 +72,10 @@ dateOutput <- function(outputId, placeholder = "Loading...") {
 #' Use with \code{\link{renderTime}} in server code.
 #'
 #' @param outputId Output variable name
+#' @param container A function to generate an HTML element to contain the text
 #' @param placeholder Placeholder text
 #' @param tz_display Show timezone abbreviation (default: TRUE)
+#' @param inline Use an inline (\code{span()}) or block container (\code{div()})
 #'
 #' @return Shiny UI output element
 #'
@@ -74,10 +84,12 @@ dateOutput <- function(outputId, placeholder = "Loading...") {
 #' @examples
 #' \dontrun{
 #' timeOutput("current_time", tz_display = TRUE)
+#' timeOutput("inline_time", inline = TRUE)
 #' }
-timeOutput <- function(outputId, placeholder = "--:--:--", tz_display = TRUE) {
+timeOutput <- function(outputId, container = if (inline) shiny::span else shiny::div,
+                       placeholder = "--:--:--", tz_display = TRUE, inline = FALSE) {
   
-  shiny::div(
+  container(
     id = outputId,
     class = "shiny-text-output shinytz-time",
     `data-tz-display` = tolower(as.character(tz_display)),
