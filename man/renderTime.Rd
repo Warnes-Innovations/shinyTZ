@@ -34,7 +34,7 @@ Creates a reactive output that renders POSIXct/POSIXlt time objects
 in the user's browser timezone. Time-only (no date component).
 }
 \examples{
-\donttest{
+\dontrun{
 output$current_time <- renderTime({
   Sys.time()
 }, format = "\%I:\%M:\%S \%p", show_tz = TRUE)

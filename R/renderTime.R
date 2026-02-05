@@ -15,7 +15,7 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' output$current_time <- renderTime({
 #'   Sys.time()
 #' }, format = "%I:%M:%S %p", show_tz = TRUE)
