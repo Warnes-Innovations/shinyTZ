@@ -42,7 +42,7 @@ in the user's browser timezone. Automatically detects timezone via JavaScript
 and falls back to server timezone if unavailable.
 }
 \examples{
-\donttest{
+\dontrun{
 # Basic usage
 output$timestamp <- renderDatetime({
   Sys.time()

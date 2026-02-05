@@ -11,13 +11,13 @@ Provides drop-in replacements for Shiny's text outputs that automatically handle
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/gwarnes-mdsol/shinyTZ}
-  \item Report bugs at \url{https://github.com/gwarnes-mdsol/shinyTZ/issues}
+  \item \url{https://github.com/Warnes-Innovations/shinyTZ}
+  \item Report bugs at \url{https://github.com/Warnes-Innovations/shinyTZ/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Gregory Warnes \email{warnes@binghamton.edu}
+\strong{Maintainer}: Gregory Warnes \email{greg@warnes-innovations.com}
 
 }
 \keyword{internal}

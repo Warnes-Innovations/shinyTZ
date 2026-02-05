@@ -37,7 +37,7 @@ Creates a reactive output that renders POSIXct/POSIXlt date objects
 in the user's browser timezone. Date-only (no time component).
 }
 \examples{
-\donttest{
+\dontrun{
 output$processing_date <- renderDate({
   task_data$completion_date
 }, format = "\%B \%d, \%Y")

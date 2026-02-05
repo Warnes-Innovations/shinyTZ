@@ -16,7 +16,7 @@
 #' @export
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' output$processing_date <- renderDate({
 #'   task_data$completion_date
 #' }, format = "%B %d, %Y")

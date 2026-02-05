@@ -17,7 +17,7 @@
 #' @return Reactive output suitable for assignment to output object
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Basic usage
 #' output$timestamp <- renderDatetime({
 #'   Sys.time()

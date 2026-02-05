@@ -1,10 +1,10 @@
 Package: shinyTZ
 Type: Package
 Title: Timezone-Aware Date and Time Rendering for Shiny
-Version: 0.1.2
-Date: 2026-01-21
+Version: 0.1.3
+Date: 2026-02-05
 Authors@R: person("Gregory", "Warnes", 
-                  email = "warnes@binghamton.edu",
+                  email = "greg@warnes-innovations.com",
                   role = c("aut", "cre"))
 Description: Provides drop-in replacements for Shiny's text outputs that 
     automatically handle timezone conversion based on the user's browser 
@@ -18,15 +18,15 @@ RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.1.0)
 Imports:
-    shiny (>= 1.7.0),
     lubridate (>= 1.9.0),
-    htmltools
+    shiny (>= 1.7.0)
 Suggests:
-    testthat (>= 3.0.0),
+    DBI,
+    dplyr,
+    htmltools,
     knitr,
     rmarkdown,
-    DBI,
-    dplyr
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
-URL: https://github.com/gwarnes-mdsol/shinyTZ
-BugReports: https://github.com/gwarnes-mdsol/shinyTZ/issues
+URL: https://github.com/Warnes-Innovations/shinyTZ
+BugReports: https://github.com/Warnes-Innovations/shinyTZ/issues
