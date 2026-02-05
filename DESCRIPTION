@@ -24,9 +24,7 @@ Suggests:
     DBI,
     dplyr,
     htmltools,
-    knitr,
     rmarkdown,
     testthat (>= 3.0.0)
-VignetteBuilder: knitr
 URL: https://github.com/Warnes-Innovations/shinyTZ
 BugReports: https://github.com/Warnes-Innovations/shinyTZ/issues
