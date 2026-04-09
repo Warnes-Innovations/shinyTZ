@@ -1,5 +1,11 @@
-## Tests using shiny::testServer() for actual render execution
-## These tests verify the full reactive render pipeline with a mocked session.
+## Tests for actual render execution via direct function invocation.
+##
+## NOTE: These tests call render functions directly (renderer()) without a full
+## Shiny session context. This exercises the render logic for explict `tz`
+## overrides (which bypass session lookup) but does NOT simulate
+## browser-timezone detection via input$shinytz_browser_tz. Full session-based
+## tests (shiny::testServer) are included where Shiny is available and require
+## explicit tz arguments to avoid session dependency.
 
 # Helper: build a minimal mock session with timezone set
 mock_session <- function(tz = "UTC") {
