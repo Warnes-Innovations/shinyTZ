@@ -46,6 +46,18 @@ test_that("renderDate show_tz parameter works", {
   expect_s3_class(renderer_no_tz, "shiny.render.function")
 })
 
+test_that("renderDate formatter parameter works", {
+  dt <- as.POSIXct("2026-01-20 15:30:00", tz = "UTC")
+  
+  # Custom formatter function
+  custom_fmt <- function(datetime, tz) {
+    paste("Date:", format(datetime, "%d/%m/%Y"))
+  }
+  
+  renderer <- renderDate({ dt }, formatter = custom_fmt)
+  expect_s3_class(renderer, "shiny.render.function")
+})
+
 test_that("renderDate locale parameter works", {
   dt <- as.POSIXct("2026-01-20 15:30:00", tz = "UTC")
   

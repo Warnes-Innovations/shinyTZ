@@ -1,0 +1,333 @@
+---
+title: "Advanced Usage of shinyTZ"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced Usage of shinyTZ}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+This vignette covers advanced shinyTZ patterns for production applications:
+
+- Custom formatter functions
+- Timezone selector widgets
+- Conditional formatting by business hours
+- Working with reactive datetime chains
+- Error handling and validation
+
+```r
+library(shinyTZ)
+```
+
+## Custom Formatter Functions
+
+The `formatter` parameter allows complete control over output formatting. It
+receives two arguments: the datetime object and the resolved target timezone
+string.
+
+```r
+# Formatter function signature: function(datetime, tz) -> character
+output$smart_time <- renderDatetime({
+  event$start_time
+}, formatter = function(dt, tz) {
+  dt_local <- lubridate::with_tz(dt, tz)
+  hour     <- lubridate::hour(dt_local)
+  base     <- format(dt_local, "%Y-%m-%d %I:%M %p")
+
+  if (hour >= 9 && hour < 17) {
+    paste(base, "\u2705 Business hours")
+  } else if (hour >= 17 && hour < 21) {
+    paste(base, "\u26a0\ufe0f  Extended hours")
+  } else {
+    paste(base, "\ud83d\udd34 Outside business hours")
+  }
+})
+```
+
+Key points:
+- The `formatter` parameter takes **precedence** over the `format` string.
+- You must do your own timezone conversion inside the formatter using
+  `lubridate::with_tz()`.
+- The formatter must return a single character string.
+
+The same `formatter` parameter is available in `renderDate()` and `renderTime()`.
+
+## Timezone Selector Widget
+
+Allow users to manually override the auto-detected timezone:
+
+```r
+library(shiny)
+library(shinyTZ)
+
+ui <- fluidPage(
+  useShinyTZ(),
+
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(
+        "user_tz",
+        "Display timezone:",
+        choices = c(
+          "Auto-detect" = "",
+          "UTC"                  = "UTC",
+          "New York (ET)"        = "America/New_York",
+          "Chicago (CT)"         = "America/Chicago",
+          "Denver (MT)"          = "America/Denver",
+          "Los Angeles (PT)"     = "America/Los_Angeles",
+          "London (GMT/BST)"     = "Europe/London",
+          "Paris (CET/CEST)"     = "Europe/Paris",
+          "Tokyo (JST)"          = "Asia/Tokyo",
+          "Sydney (AEST/AEDT)"   = "Australia/Sydney"
+        )
+      )
+    ),
+    mainPanel(
+      datetimeOutput("display_time")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  # Resolve effective timezone: manual override or browser auto-detect
+  effective_tz <- reactive({
+    manual <- input$user_tz
+    if (!is.null(manual) && nchar(manual) > 0) {
+      manual
+    } else {
+      get_browser_tz(session)
+    }
+  })
+
+  output$display_time <- renderDatetime({
+    Sys.time()
+  }, tz = effective_tz())
+}
+
+shinyApp(ui, server)
+```
+
+## Reactive Datetime Chains
+
+Keep datetime objects as `POSIXct` throughout the reactive chain, converting to
+character only at the final rendering step:
+
+```r
+server <- function(input, output, session) {
+
+  # ✅ CORRECT: keep POSIXct through the chain
+  raw_data <- reactive({
+    dbGetQuery(con, "SELECT * FROM events ORDER BY event_time DESC LIMIT 100")
+    # event_time column is POSIXct
+  })
+
+  filtered_data <- reactive({
+    df <- raw_data()
+    df[df$event_type == input$type_filter, ]
+    # Still POSIXct — no conversion yet
+  })
+
+  output$event_table <- renderTable({
+    df <- filtered_data()
+    tz <- get_browser_tz(session)
+
+    # Convert to character only at the final rendering step
+    df$event_time <- format_in_tz(df$event_time, tz = tz,
+                                   format = "%Y-%m-%d %H:%M")
+    df
+  })
+
+  # ❌ WRONG: converting too early loses timezone information
+  # processed <- reactive({
+  #   df$event_time <- format(df$event_time, "%Y-%m-%d")  # Timezone lost!
+  #   df
+  # })
+}
+```
+
+## Formatting Vectors of Timestamps
+
+`format_in_tz()` works on vectors, making it suitable for table columns:
+
+```r
+server <- function(input, output, session) {
+  output$data_table <- renderTable({
+    df <- my_data()
+    tz <- get_browser_tz(session)
+
+    # Format entire column at once
+    df$created_at  <- format_in_tz(df$created_at,  tz = tz, format = "%Y-%m-%d %H:%M")
+    df$updated_at  <- format_in_tz(df$updated_at,  tz = tz, format = "%Y-%m-%d %H:%M")
+    df
+  })
+}
+```
+
+## Showing Relative Time ("3 minutes ago")
+
+Combine `get_browser_tz()` with the `lubridate` package for relative time display:
+
+```r
+output$time_ago <- renderText({
+  now   <- Sys.time()
+  event <- my_event_time()
+
+  diff_secs <- as.numeric(difftime(now, event, units = "secs"))
+
+  if (diff_secs < 60) {
+    "just now"
+  } else if (diff_secs < 3600) {
+    paste(floor(diff_secs / 60), "minutes ago")
+  } else if (diff_secs < 86400) {
+    paste(floor(diff_secs / 3600), "hours ago")
+  } else {
+    # Fall back to absolute time for old events
+    format_in_tz(event, tz = get_browser_tz(session), format = "%Y-%m-%d")
+  }
+})
+```
+
+## High-Frequency Updates (Live Clocks)
+
+For live clocks, use `reactiveTimer()` with `renderDatetime()`:
+
+```r
+server <- function(input, output, session) {
+  # Update every second
+  tick <- reactiveTimer(1000)
+
+  output$live_clock <- renderDatetime({
+    tick()          # Invalidate every second
+    Sys.time()      # Returns current time each tick
+  }, format = "%H:%M:%S", show_tz = TRUE)
+}
+```
+
+## Displaying Timezone Information
+
+```r
+server <- function(input, output, session) {
+  # Show the user their detected timezone
+  output$detected_tz <- renderText({
+    tz <- get_browser_tz(session)
+    paste("Detected timezone:", tz)
+  })
+
+  # Show UTC offset from browser input
+  output$utc_offset <- renderText({
+    offset_minutes <- input$shinytz_utc_offset  # Set by shinytz.js
+    if (is.null(offset_minutes)) return("Unknown")
+
+    hours   <- abs(offset_minutes) %/% 60
+    minutes <- abs(offset_minutes) %%  60
+    sign    <- if (offset_minutes <= 0) "+" else "-"  # Note: reversed sign convention
+    sprintf("UTC%s%02d:%02d", sign, hours, minutes)
+  })
+}
+```
+
+## Handling `NA` and `NULL` Datetimes
+
+Both `renderDatetime()` and `format_in_tz()` handle missing values gracefully:
+
+```r
+# format_in_tz returns empty string for NULL or all-NA inputs
+format_in_tz(NULL)                    # ""
+format_in_tz(as.POSIXct(NA))         # ""
+
+# renderDatetime shows nothing (silent validation) for NULL
+output$maybe_time <- renderDatetime({
+  if (input$show_time) Sys.time() else NULL
+})
+```
+
+## Validating Custom Input Timezones
+
+If you accept timezone input from users, always validate against `OlsonNames()`:
+
+```r
+server <- function(input, output, session) {
+  safe_tz <- reactive({
+    tz_input <- trimws(input$custom_tz)
+
+    if (nchar(tz_input) == 0 || !tz_input %in% OlsonNames()) {
+      get_browser_tz(session)  # Fall back to browser timezone
+    } else {
+      tz_input
+    }
+  })
+
+  output$custom_time <- renderDatetime({
+    Sys.time()
+  }, tz = safe_tz())
+}
+```
+
+## Full Example: Multi-Timezone Dashboard
+
+```r
+library(shiny)
+library(shinyTZ)
+library(lubridate)
+
+ui <- fluidPage(
+  useShinyTZ(),
+  titlePanel("Multi-Timezone Dashboard"),
+
+  fluidRow(
+    column(4,
+      wellPanel(
+        h4("Your Time"),
+        datetimeOutput("your_time"),
+        textOutput("your_tz")
+      )
+    ),
+    column(4,
+      wellPanel(
+        h4("UTC"),
+        datetimeOutput("utc_time")
+      )
+    ),
+    column(4,
+      wellPanel(
+        h4("Tokyo"),
+        datetimeOutput("tokyo_time")
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  tick <- reactiveTimer(1000)
+
+  now <- reactive({
+    tick()
+    Sys.time()
+  })
+
+  output$your_time  <- renderDatetime({ now() })
+  output$utc_time   <- renderDatetime({ now() }, tz = "UTC")
+  output$tokyo_time <- renderDatetime({ now() }, tz = "Asia/Tokyo")
+
+  output$your_tz <- renderText({
+    paste("(", get_browser_tz(session), ")")
+  })
+}
+
+shinyApp(ui, server)
+```
+
+## Next Steps
+
+- See the [function reference](../reference/index.html) for complete API documentation
+- Read the [Getting Started vignette](getting-started.html) for foundational concepts
+- Browse the source code on [GitHub](https://github.com/Warnes-Innovations/shinyTZ)

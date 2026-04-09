@@ -11,6 +11,8 @@
 #'
 #' @return Shiny UI output element
 #'
+#' @seealso [renderDatetime()], [dateOutput()], [timeOutput()], [useShinyTZ()]
+#'
 #' @export
 #'
 #' @examples
@@ -24,6 +26,8 @@
 #'   Sys.time()
 #' })
 #' }
+#'
+#' @importFrom shiny span div singleton tags addResourcePath
 datetimeOutput <- function(outputId, container = if (inline) shiny::span else shiny::div, 
                            placeholder = "Loading...", tz_display = TRUE, inline = FALSE) {
   
@@ -47,6 +51,8 @@ datetimeOutput <- function(outputId, container = if (inline) shiny::span else sh
 #' @param inline Use an inline (\code{span()}) or block container (\code{div()})
 #'
 #' @return Shiny UI output element
+#'
+#' @seealso [renderDate()], [datetimeOutput()], [timeOutput()], [useShinyTZ()]
 #'
 #' @export
 #'
@@ -78,6 +84,8 @@ dateOutput <- function(outputId, container = if (inline) shiny::span else shiny:
 #' @param inline Use an inline (\code{span()}) or block container (\code{div()})
 #'
 #' @return Shiny UI output element
+#'
+#' @seealso [renderTime()], [datetimeOutput()], [dateOutput()], [useShinyTZ()]
 #'
 #' @export
 #'

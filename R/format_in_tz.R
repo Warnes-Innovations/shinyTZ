@@ -10,13 +10,16 @@
 #'
 #' @return Formatted character string
 #'
-#' @export
+#' @seealso [get_browser_tz()], [renderDatetime()], [renderDate()], [renderTime()]
 #'
 #' @examples
 #' # Format server timestamp in specific timezone
 #' ts <- Sys.time()
 #' format_in_tz(ts, format = "%Y-%m-%d %H:%M:%S %Z", tz = "America/New_York")
 #' format_in_tz(ts, format = "%Y-%m-%d %H:%M:%S %Z", tz = "Asia/Tokyo")
+#'
+#' @importFrom lubridate with_tz
+#' @export
 format_in_tz <- function(datetime, format = "%Y-%m-%d %H:%M:%S", 
                          tz = NULL, locale = NULL) {
   

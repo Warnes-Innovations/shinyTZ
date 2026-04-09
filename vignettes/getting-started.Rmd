@@ -1,0 +1,220 @@
+---
+title: "Getting Started with shinyTZ"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with shinyTZ}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+**shinyTZ** makes Shiny timestamp display *just work* for users in any timezone.
+By default, Shiny renders dates and times using the **server's** timezone—which
+confuses users who are in a different locale. shinyTZ automatically detects each
+user's browser timezone via JavaScript and renders datetime values accordingly.
+
+```r
+library(shinyTZ)
+```
+
+## The Problem
+
+Consider a Shiny app running on a server in US/Eastern time:
+
+```r
+# Standard Shiny — shows EASTERN time regardless of where the user is
+output$last_updated <- renderText({
+  format(Sys.time(), "%Y-%m-%d %H:%M:%S")  # "2026-01-20 15:30:00"
+})
+```
+
+A user in Tokyo sees `15:30:00 EST` and has no idea what that means relative to
+their current time.
+
+## The Solution
+
+Replace `renderText()` with `renderDatetime()` and add `useShinyTZ()` to your UI:
+
+```r
+library(shiny)
+library(shinyTZ)
+
+ui <- fluidPage(
+  useShinyTZ(),          # Required: loads the timezone-detection JavaScript
+
+  h3("Last Updated:"),
+  datetimeOutput("last_updated")
+)
+
+server <- function(input, output, session) {
+  output$last_updated <- renderDatetime({
+    Sys.time()           # Automatically shown in the user's local timezone!
+  })
+}
+
+shinyApp(ui, server)
+```
+
+The user in Tokyo now sees `2026-01-21 05:30:00 JST`. ✅
+
+## Core Functions
+
+### `useShinyTZ()`
+
+Must be included once in the Shiny UI. Loads the JavaScript that detects the
+browser's timezone and sends it to the server as a reactive input
+(`input$shinytz_browser_tz`).
+
+```r
+ui <- fluidPage(
+  useShinyTZ(),   # Include early in the UI definition
+  ...
+)
+```
+
+### Render Functions
+
+| Function | Output Type | Default Format |
+|----------|-------------|---------------|
+| `renderDatetime()` | Date + time | `"%Y-%m-%d %H:%M:%S"` |
+| `renderDate()` | Date only | `"%Y-%m-%d"` |
+| `renderTime()` | Time only | `"%H:%M:%S"` |
+
+All render functions:
+
+- Accept `POSIXct` or `POSIXlt` datetime objects
+- Automatically convert to the user's browser timezone
+- Fall back to server timezone if JavaScript is unavailable
+
+### Output Functions
+
+Each render function has a matching output function for the UI:
+
+```r
+# UI
+datetimeOutput("my_datetime")
+dateOutput("my_date")
+timeOutput("my_time")
+
+# Server
+output$my_datetime <- renderDatetime({ Sys.time() })
+output$my_date     <- renderDate({ Sys.time() })
+output$my_time     <- renderTime({ Sys.time() })
+```
+
+## Formatting Options
+
+### Format Strings
+
+Use standard `strftime` format codes:
+
+```r
+output$timestamp <- renderDatetime({
+  Sys.time()
+}, format = "%B %d, %Y at %I:%M %p")
+# "January 20, 2026 at 03:30 PM"
+```
+
+### Show Timezone Abbreviation
+
+```r
+output$timestamp <- renderDatetime({
+  Sys.time()
+}, show_tz = TRUE)
+# "2026-01-20 15:30:00 EST"
+```
+
+### Override Timezone
+
+Force a specific timezone regardless of the user's browser setting:
+
+```r
+output$utc_time <- renderDatetime({
+  Sys.time()
+}, tz = "UTC")
+```
+
+## Inline vs. Block Display
+
+All output functions support inline rendering for use inside text:
+
+```r
+ui <- fluidPage(
+  p(
+    "The server time is ",
+    datetimeOutput("inline_time", inline = TRUE),
+    " in your timezone."
+  )
+)
+```
+
+## Working with Database Timestamps
+
+When reading datetime columns from a database, the returned `POSIXct` values
+typically carry UTC timezone information. shinyTZ handles the conversion
+automatically:
+
+```r
+server <- function(input, output, session) {
+  events <- reactive({
+    # Returns POSIXct columns from database
+    dbGetQuery(con, "SELECT id, event_name, created_at FROM events")
+  })
+
+  output$event_table <- renderTable({
+    df <- events()
+    user_tz <- get_browser_tz(session)   # Get user's timezone
+
+    # Convert all timestamp columns
+    df$created_at <- sapply(df$created_at, format_in_tz,
+                            tz = user_tz,
+                            format = "%Y-%m-%d %H:%M")
+    df
+  })
+}
+```
+
+## Detecting the User's Timezone
+
+Use `get_browser_tz()` to access the detected timezone in your own logic:
+
+```r
+server <- function(input, output, session) {
+  output$user_info <- renderText({
+    tz <- get_browser_tz(session)
+    paste("Your timezone:", tz)
+  })
+}
+```
+
+If the browser timezone is unavailable (JavaScript disabled), `get_browser_tz()`
+returns `Sys.timezone()` by default. You can supply your own fallback:
+
+```r
+tz <- get_browser_tz(session, fallback = "UTC")
+```
+
+## Graceful Degradation
+
+shinyTZ degrades gracefully when JavaScript is not available:
+
+1. The browser timezone is `NULL`
+2. `get_browser_tz()` returns the fallback timezone (`Sys.timezone()`)
+3. All render functions still work — output is shown in the server timezone
+
+Users with JavaScript disabled see the server timezone (same as standard Shiny),
+rather than an error.
+
+## Next Steps
+
+- See the **Advanced Usage** vignette for custom formatters and complex scenarios
+- Browse the [function reference](../reference/index.html) for full API documentation
+- Check the [demo app](../articles/demo-app.html) for a live interactive example

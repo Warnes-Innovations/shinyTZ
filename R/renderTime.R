@@ -5,14 +5,17 @@
 #'
 #' @param expr Expression returning POSIXct or POSIXlt datetime object
 #' @param format Format string (default: "%H:%M:%S")
+#' @param formatter Optional custom formatter function(datetime, tz) for advanced logic.
+#'   If provided, takes precedence over format parameter.
 #' @param tz Override timezone (defaults to browser timezone)
+#' @param locale BCP 47 locale code for formatting (e.g., "en-US", "de-DE")
 #' @param show_tz Whether to append timezone abbreviation (default: FALSE)
 #' @param env Evaluation environment
 #' @param quoted Is expr quoted?
 #'
 #' @return Reactive output suitable for assignment to output object
 #'
-#' @export
+#' @seealso [timeOutput()], [renderDatetime()], [renderDate()], [get_browser_tz()], [format_in_tz()]
 #'
 #' @examples
 #' \donttest{
@@ -20,7 +23,12 @@
 #'   Sys.time()
 #' }, format = "%I:%M:%S %p", show_tz = TRUE)
 #' }
-renderTime <- function(expr, format = "%H:%M:%S", tz = NULL, show_tz = FALSE,
+#'
+#' @importFrom shiny installExprFunction createRenderFunction textOutput validate need
+#' @importFrom lubridate with_tz
+#' @export
+renderTime <- function(expr, format = "%H:%M:%S", formatter = NULL,
+                       tz = NULL, locale = NULL, show_tz = FALSE,
                        env = parent.frame(), quoted = FALSE) {
   
   func <- shiny::installExprFunction(expr, "func", env, quoted, label = "renderTime")
@@ -41,7 +49,11 @@ renderTime <- function(expr, format = "%H:%M:%S", tz = NULL, show_tz = FALSE,
         target_tz <- Sys.timezone()
       }
       
-      result <- format_in_tz(value, format = format, tz = target_tz)
+      result <- if (!is.null(formatter)) {
+        formatter(value, target_tz)
+      } else {
+        format_in_tz(value, format = format, tz = target_tz, locale = locale)
+      }
       
       if (show_tz) {
         dt_tz <- lubridate::with_tz(value, target_tz)

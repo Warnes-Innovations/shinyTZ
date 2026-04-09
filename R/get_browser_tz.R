@@ -8,6 +8,8 @@
 #'
 #' @return Character string with IANA timezone name (e.g., "America/New_York")
 #'
+#' @seealso [format_in_tz()], [renderDatetime()], [renderDate()], [renderTime()]
+#'
 #' @export
 #'
 #' @examples
@@ -22,6 +24,8 @@
 #'   })
 #' }
 #' }
+#'
+#' @importFrom shiny getDefaultReactiveDomain
 get_browser_tz <- function(session = shiny::getDefaultReactiveDomain(), 
                            fallback = Sys.timezone()) {
   

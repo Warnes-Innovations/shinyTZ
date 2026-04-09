@@ -16,6 +16,8 @@
 #'
 #' @return Reactive output suitable for assignment to output object
 #'
+#' @seealso [datetimeOutput()], [renderDate()], [renderTime()], [get_browser_tz()], [format_in_tz()]
+#'
 #' @examples
 #' \donttest{
 #' # Basic usage
@@ -24,6 +26,8 @@
 #' })
 #' }
 #'
+#' @importFrom shiny installExprFunction createRenderFunction textOutput validate need getDefaultReactiveDomain
+#' @importFrom lubridate with_tz
 #' @export
 renderDatetime <- function(expr, format = "%Y-%m-%d %H:%M:%S", 
                            formatter = NULL, tz = NULL, locale = NULL,

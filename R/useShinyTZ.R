@@ -6,6 +6,8 @@
 #'
 #' @return An HTML tag object that should be included in the Shiny UI
 #'
+#' @seealso [datetimeOutput()], [dateOutput()], [timeOutput()]
+#'
 #' @export
 #'
 #' @examples
@@ -28,6 +30,8 @@
 #'
 #' shinyApp(ui, server)
 #' }
+#'
+#' @importFrom shiny addResourcePath singleton tags
 useShinyTZ <- function() {
   # Ensure resource path is registered (redundant with .onLoad but safer)
   shiny::addResourcePath(
