@@ -1,3 +1,60 @@
+# shinyTZ 0.2.0
+
+CRAN preparation release — API completion, bug fixes, CI/CD, and documentation.
+
+## Breaking Changes
+
+- `renderTime()` signature expanded: added `formatter` and `locale` parameters for
+  consistency with `renderDatetime()` and `renderDate()`. Existing code using
+  positional arguments for `tz` or `show_tz` must be updated to use named arguments.
+
+## New Features
+
+- `renderDate()` now accepts a `formatter` parameter (custom formatter function),
+  consistent with `renderDatetime()`.
+- `renderTime()` now accepts `formatter` and `locale` parameters, consistent with
+  `renderDatetime()` and `renderDate()`.
+- `.onLoad()` now automatically registers the `inst/www` resource path so users do
+  not need to call `shiny::addResourcePath()` manually before `useShinyTZ()`.
+
+## Bug Fixes
+
+- Fixed undefined `%||%` operator (now defined internally for R < 4.4.0 compatibility).
+- Removed duplicate exported function definitions that could cause issues on
+  certain R versions.
+- Fixed `NAMESPACE` to include all required `importFrom` declarations.
+- Fixed `URL` and `BugReports` fields in DESCRIPTION (now point to correct repository).
+
+## Infrastructure
+
+- Added GitHub Actions workflows: R-CMD-check, test-coverage, pkgdown.
+- Added `Config/testthat/edition: 3` to DESCRIPTION.
+- Removed `LazyData: true` (no data files in package).
+- Removed unused `DBI` and `dplyr` from Suggests.
+- Added `shinytest2` to Suggests for UI integration tests.
+- Added vignettes: "Getting Started" and "Advanced Usage".
+- Added `cran-comments.md` for CRAN submission tracking.
+
+---
+
+# shinyTZ 0.1.2
+
+- Added `inline` parameter to all output functions (`datetimeOutput()`,
+  `dateOutput()`, `timeOutput()`) enabling use in `inline = TRUE` or
+  `inline = FALSE` modes.
+- Added `container` parameter to all output functions allowing custom HTML
+  container elements.
+
+---
+
+# shinyTZ 0.1.1
+
+- Added `tz_display` parameter to `datetimeOutput()` and `timeOutput()`.
+- Added `placeholder` parameter to all output functions.
+- Improved JavaScript timezone detection: added UTC offset and locale detection.
+
+---
+
 # shinyTZ 0.1.0
 
 Initial development release of timezone-aware Shiny components.
@@ -18,40 +75,3 @@ Initial development release of timezone-aware Shiny components.
 - Optional timezone abbreviation display via `show_tz` parameter
 - Multi-layer validation with inline error display
 - Comprehensive unit tests for timezone conversion
-
-## Design Decisions
-
-See [inst/docs/design-document.md](inst/docs/design-document.md) for complete architectural design including:
-
-- POSIXct/POSIXlt for internal representation
-- Client-side rendering as PRIMARY approach
-- Three separate functions (renderDatetime, renderDate, renderTime)
-- Format flexibility (format strings + custom formatters)
-- Timezone override support
-- Multi-layer validation strategy
-- Complete testing requirements
-
-## Package Structure
-
-- `R/datetime-renders.R` - Render functions
-- `R/datetime-outputs.R` - UI output functions
-- `R/timezone-utils.R` - Utility functions
-- `R/zzz.R` - Package initialization (.onLoad)
-- `inst/www/shinytz.js` - Browser timezone detection
-- `tests/testthat/` - Unit tests
-
-## Known Limitations
-
-- Requires modern browser with `Intl.DateTimeFormat()` support (IE 11+)
-- Server-side rendering used for custom format strings (minor performance impact)
-- Locale integration not yet implemented (reserved for future enhancement)
-
-## Future Enhancements
-
-See design document for planned Phase 2 and Phase 3 features:
-
-- Locale-aware formatting
-- Relative time rendering ("3 minutes ago")
-- Duration formatting
-- Timezone-aware calendar widgets
-- Multi-timezone comparison widget

@@ -1,2 +1,7 @@
 ^renv$
 ^renv\.lock$
+^\.github$
+^\.Rprofile$
+^\.cursorrules$
+^cran-comments\.md$
+^inst/docs/cran-prep-plan\.md$

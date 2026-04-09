@@ -5,6 +5,8 @@
 #'
 #' @param expr Expression returning POSIXct or POSIXlt datetime object
 #' @param format Format string (default: "%Y-%m-%d")
+#' @param formatter Optional custom formatter function(datetime, tz) for advanced logic.
+#'   If provided, takes precedence over format parameter.
 #' @param tz Override timezone (defaults to browser timezone)
 #' @param locale BCP 47 locale code
 #' @param show_tz Whether to append timezone abbreviation (default: FALSE, rarely used for dates)
@@ -13,7 +15,7 @@
 #'
 #' @return Reactive output suitable for assignment to output object
 #'
-#' @export
+#' @seealso [dateOutput()], [renderDatetime()], [renderTime()], [get_browser_tz()], [format_in_tz()]
 #'
 #' @examples
 #' \donttest{
@@ -21,7 +23,11 @@
 #'   task_data$completion_date
 #' }, format = "%B %d, %Y")
 #' }
-renderDate <- function(expr, format = "%Y-%m-%d", 
+#'
+#' @importFrom shiny installExprFunction createRenderFunction textOutput validate need
+#' @importFrom lubridate with_tz
+#' @export
+renderDate <- function(expr, format = "%Y-%m-%d", formatter = NULL,
                        tz = NULL, locale = NULL, show_tz = FALSE,
                        env = parent.frame(), quoted = FALSE) {
   
@@ -43,7 +49,11 @@ renderDate <- function(expr, format = "%Y-%m-%d",
         target_tz <- Sys.timezone()
       }
       
-      result <- format_in_tz(value, format = format, tz = target_tz, locale = locale)
+      result <- if (!is.null(formatter)) {
+        formatter(value, target_tz)
+      } else {
+        format_in_tz(value, format = format, tz = target_tz, locale = locale)
+      }
       
       if (show_tz) {
         dt_tz <- lubridate::with_tz(value, target_tz)

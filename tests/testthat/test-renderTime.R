@@ -50,6 +50,29 @@ test_that("renderTime show_tz parameter works", {
   expect_s3_class(renderer_no_tz, "shiny.render.function")
 })
 
+test_that("renderTime formatter parameter works", {
+  dt <- as.POSIXct("2026-01-20 15:30:00", tz = "UTC")
+  
+  custom_fmt <- function(datetime, tz) {
+    paste("Time:", format(datetime, "%H:%M"))
+  }
+  
+  renderer <- renderTime({ dt }, formatter = custom_fmt)
+  expect_s3_class(renderer, "shiny.render.function")
+})
+
+test_that("renderTime locale parameter works", {
+  dt <- as.POSIXct("2026-01-20 15:30:00", tz = "UTC")
+  
+  # locale is reserved for future use; verify it doesn't cause errors
+  renderer_locale <- renderTime({ dt }, locale = "de-DE")
+  expect_s3_class(renderer_locale, "shiny.render.function")
+  
+  # NULL locale (default)
+  renderer_no_locale <- renderTime({ dt }, locale = NULL)
+  expect_s3_class(renderer_no_locale, "shiny.render.function")
+})
+
 test_that("renderTime handles edge cases", {
   # Test with different datetime objects
   dt_posixct <- as.POSIXct("2026-01-20 15:30:00", tz = "UTC")

@@ -1,5 +1,11 @@
 # shinyTZ
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/Warnes-Innovations/shinyTZ/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Warnes-Innovations/shinyTZ/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/Warnes-Innovations/shinyTZ/branch/main/graph/badge.svg)](https://app.codecov.io/gh/Warnes-Innovations/shinyTZ?branch=main)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+<!-- badges: end -->
+
 Timezone-aware date and time rendering for R Shiny applications.
 
 ## Overview
@@ -33,7 +39,7 @@ output$timestamp <- renderDatetime({
 ```r
 # Install from GitHub
 # install.packages("remotes")
-remotes::install_github("gwarnes-mdsol/shinyTZ")
+remotes::install_github("Warnes-Innovations/shinyTZ")
 ```
 
 ## Quick Start
@@ -43,6 +49,7 @@ library(shiny)
 library(shinyTZ)
 
 ui <- fluidPage(
+  useShinyTZ(),              # Required: enables browser timezone detection
   titlePanel("Timezone-Aware Timestamps"),
   
   h4("Last Update:"),
@@ -171,7 +178,7 @@ server <- function(input, output, session) {
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details
+GPL-2 License — see [LICENSE](LICENSE) file for details.
 
 ## Author
 
